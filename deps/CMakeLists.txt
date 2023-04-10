@@ -1,0 +1,10 @@
+set(IMGUI_SRC imgui/imgui_draw.cpp imgui/imgui_tables.cpp imgui/imgui_widgets.cpp imgui/imgui.cpp imgui/backends/imgui_impl_glfw.cpp imgui/backends/imgui_impl_opengl3.cpp)
+set_source_files_properties(${IMGUI_SRC} PROPERTIES LANGUAGE CUDA)
+add_library(imgui ${IMGUI_SRC})
+target_link_libraries(imgui PUBLIC glfw)
+target_include_directories(imgui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/imgui ${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends)
+
+set(GLAD_SRC glad/src/glad.c)
+set_source_files_properties(${GLAD_SRC} PROPERTIES LANGUAGE CUDA)
+add_library(glad ${GLAD_SRC})
+target_include_directories(glad PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glad/include)
