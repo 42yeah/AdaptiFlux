@@ -9,3 +9,4 @@ find_package(glm REQUIRED)
 
 add_subdirectory(deps)
 add_subdirectory(src)
+add_subdirectory(data)

@@ -19,6 +19,7 @@ target_compile_options(adaptiflux PUBLIC
     -Xcudafe --diag_suppress=esa_on_defaulted_function_ignored)
 
 add_subdirectory(nrrd)
+add_subdirectory(shaders)
 
 target_link_libraries(adaptiflux PUBLIC 
     glad 
