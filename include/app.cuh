@@ -10,9 +10,6 @@
 #include "Camera.h"
 #include <VectorField.h> // for bounding box
 #include "renderstate.cuh"
-#include "renderstates/lineglyph.cuh"
-#include "renderstates/arrowglyph.cuh"
-#include "renderstates/streamline.cuh"
 
 class RenderState;
 

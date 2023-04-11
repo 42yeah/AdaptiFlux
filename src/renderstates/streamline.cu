@@ -70,7 +70,7 @@ bool StreamLineRenderState::allocate_graphics_resources() {
     int num_floats = num_vertices * 6;
     int size_in_bytes = num_floats * sizeof(float);
     
-    std::cout << "Allocating " << size_in_bytes << " bytes for streamline." << std::endl;
+    std::cout << "Allocating " << size_in_bytes << " bytes (" << (size_in_bytes / 1024) << "K) for streamline." << std::endl;
 
     std::unique_ptr<float[]> empty_data = std::make_unique<float[]>(num_floats);
     streamline_vao = VAO::make_vao(empty_data.get(), size_in_bytes, GL_DYNAMIC_DRAW,

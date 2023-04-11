@@ -6,6 +6,10 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include "debug_kernels.cuh"
+#include "renderstates/lineglyph.cuh"
+#include "renderstates/arrowglyph.cuh"
+#include "renderstates/streamline.cuh"
+#include "renderstates/streamtube.cuh"
 
 // For GLFW stuffs
 App *bound_app = nullptr;
@@ -416,7 +420,8 @@ void App::draw_user_controls()
         "No visualizations",
         "Line glyphs",
         "Arrow glyphs",
-        "Streamlines"
+        "Streamlines",
+        "Streamtubes"
     };
 
     ImGui::SetNextWindowPos({0, 0}, ImGuiCond_FirstUseEver);
@@ -450,6 +455,10 @@ void App::draw_user_controls()
 
                         case 3:
                             switch_state(std::make_shared<StreamLineRenderState>());
+                            break;
+
+                        case 4:
+                            switch_state(std::make_shared<StreamTubeRenderState>());
                             break;
                     }
                 }

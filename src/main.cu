@@ -11,15 +11,18 @@ int main(int argc, char *argv[]) {
         std::cerr << "Failed to initialize YYLVV visualizer?" << std::endl;
         return 1;
     }
-    App app(res);
-    if (!app.valid)
     {
-        std::cerr << "Applicationf failed to initialize?" << std::endl;
+        App app(res);
+        if (!app.valid)
+        {
+            std::cerr << "Applicationf failed to initialize?" << std::endl;
+        }
+        else
+        {
+            app.loop();
+        }
     }
-    else
-    {
-        app.loop();
-    }
+    
     // start_ui(res);
     if (!free_yylvv_resources(res)) {
         std::cerr << "Failed to release YYLVV resources?" << std::endl;
