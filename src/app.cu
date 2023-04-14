@@ -202,6 +202,26 @@ bool App::init()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330 core");
 
+    // Setup framebuffer
+    framebuffer = std::make_unique<Framebuffer>(screen_width, screen_height);
+    float rect_vao_data[] = {
+        -1.0f, -1.0f, 0.0f,
+        1.0f, -1.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
+        -1.0f, 1.0f, 0.0f,
+        -1.0f, -1.0f, 0.0f
+    };
+    rect_vao = VAO::make_vao(rect_vao_data, sizeof(rect_vao_data), GL_STATIC_DRAW, 
+        std::vector<VertexAttribPointer>(
+            {
+                VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, nullptr)
+            }
+        ), GLDrawCall(GL_TRIANGLES, 0, 6));
+    framebuffer_render_program = Program::make_program("shaders/simple.vert", "shaders/framebuffer.frag");
+    // assert(framebuffer->render_test_buffer());
+    CHECK_OPENGL_ERRORS();
+
     return true;
 }
 
@@ -347,12 +367,16 @@ void App::loop()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        framebuffer->use();
         draw_delta_wing();
 
         if (render_state) 
         {
             render_state->render(*this);
         }
+        framebuffer->done();
+
+        framebuffer->draw(rect_vao, framebuffer_render_program, "fbo", 0);
 
         if (user_interface_mode)
         {
@@ -500,6 +524,11 @@ void App::draw_user_controls()
         {
             restore_camera_pose();
         }
+
+        // if (ImGui::Button("Screenshot"))
+        // {
+
+        // }
     }
     ImGui::End();
 

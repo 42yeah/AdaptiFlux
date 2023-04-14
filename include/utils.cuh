@@ -3,8 +3,13 @@
 
 #include <cmath>
 #include <glm/glm.hpp>
+#include <glad/glad.h>
+#include <cuda_runtime.h>
 
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
 #define CHECK_CUDA_ERROR(val) check_cuda_result((val), (#val), __FILE__, __LINE__)
+#define CHECK_OPENGL_ERRORS() assert(check_opengl_errors() && ("Failed to pass OpenGL check at " __FILE__ ":" STR(__LINE__)))
 
 template<typename T>
 void check_cuda_result(T result, const char *const func, const char *const file, int line) {
@@ -74,6 +79,17 @@ inline bool ends_with(const std::string &str, const std::string &suffix)
     }
 
     return str.substr(str.size() - suffix.size(), suffix.size()) == suffix;
+}
+
+inline bool check_opengl_errors()
+{
+    unsigned int error = glGetError();
+    if (error != GL_NONE)
+    {
+        std::cerr << "OpenGL error found: code " << error << std::hex << " (" << error << ")" << std::dec << std::endl;
+        return false;
+    }
+    return true;
 }
 
 #endif

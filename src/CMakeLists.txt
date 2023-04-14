@@ -5,6 +5,7 @@ set(ADAPTIFLUX_SRC
     main.cu 
     Program.cpp 
     VAO.cpp
+    Framebuffer.cpp
     renderstates/arrowglyph.cu
     renderstates/lineglyph.cu 
     renderstates/streamline.cu
@@ -26,4 +27,5 @@ target_link_libraries(adaptiflux PUBLIC
     imgui
     nrrd
     glm::glm
-    glfw)
+    glfw
+    stb)

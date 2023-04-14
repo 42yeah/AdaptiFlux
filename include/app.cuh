@@ -10,6 +10,7 @@
 #include "Camera.h"
 #include <VectorField.h> // for bounding box
 #include "renderstate.cuh"
+#include "Framebuffer.h"
 
 class RenderState;
 
@@ -78,6 +79,11 @@ public:
     // color transfer function texture
     cudaArray_t ctf_data_cuda;
     cudaTextureObject_t ctf_tex_cuda;
+
+    // global framebuffer (for sceenshot & hires rendering)
+    std::unique_ptr<Framebuffer> framebuffer;
+    std::shared_ptr<VAO> rect_vao;
+    std::shared_ptr<Program> framebuffer_render_program;
 
     // UI controls
     bool user_interface_mode;

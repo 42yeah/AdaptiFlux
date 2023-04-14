@@ -8,3 +8,8 @@ set(GLAD_SRC glad/src/glad.c)
 set_source_files_properties(${GLAD_SRC} PROPERTIES LANGUAGE CUDA)
 add_library(glad ${GLAD_SRC})
 target_include_directories(glad PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glad/include)
+
+set(STB_SRC stb/stb_image_write.c)
+set_source_files_properties(${STB_SRC} PROPERTIES LANGUAGE CUDA)
+add_library(stb ${STB_SRC})
+target_include_directories(stb PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/stb)
