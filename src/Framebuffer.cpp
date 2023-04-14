@@ -41,9 +41,10 @@ Framebuffer::~Framebuffer()
 
 bool Framebuffer::screenshot(const std::string &path) const
 {
-    std::unique_ptr<unsigned int[]> data = std::make_unique<unsigned int[]>(width * height * 3 * sizeof(unsigned int));
+    std::unique_ptr<unsigned char[]> data = std::make_unique<unsigned char[]>(width * height * 3 * sizeof(unsigned int));
     glBindTexture(GL_TEXTURE_2D, texture_gl);
 
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, data.get());
 
     stbi_flip_vertically_on_write(true);

@@ -23,7 +23,8 @@ App::App(YYLVVRes &res) : res(res),
     visualization_mode(0),
     should_draw_bounding_box(true),
     should_draw_delta_wing(true),
-    should_draw_shadow(true)
+    should_draw_shadow(true),
+    custom_resolution(false)
 {
     if (!init())
     {
@@ -124,6 +125,7 @@ bool App::init()
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetKeyCallback(window, key_callback_glfw);
     glfwSetCursorPosCallback(window, cursor_pos_callback_glfw);
+    glfwSetWindowSizeCallback(window, window_size_callback_glfw);
     render_state = nullptr;
     glfwGetFramebufferSize(window, &screen_width, &screen_height);
     glfwSwapInterval(1);
@@ -221,6 +223,7 @@ bool App::init()
             }
         ), GLDrawCall(GL_TRIANGLES, 0, 6));
     framebuffer_render_program = Program::make_program("shaders/simple.vert", "shaders/framebuffer.frag");
+    custom_resolution = false;
     // assert(framebuffer->render_test_buffer());
     CHECK_OPENGL_ERRORS();
 
@@ -237,6 +240,12 @@ void App::cursor_pos_callback_glfw(GLFWwindow *window, double xpos, double ypos)
 {
     assert(bound_app != nullptr);
     bound_app->cursor_pos_callback(window, xpos, ypos);
+}
+
+void App::window_size_callback_glfw(GLFWwindow *window, int width, int height)
+{
+    assert(bound_app != nullptr);
+    bound_app->window_size_callback(window, width, height);
 }
 
 void App::key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -303,6 +312,19 @@ void App::cursor_pos_callback(GLFWwindow *window, double xpos, double ypos)
     camera.update_components(screen_width, screen_height);
 }
 
+void App::window_size_callback(GLFWwindow *window, int width, int height)
+{
+    screen_width = width;
+    screen_height = height;
+    glViewport(0, 0, screen_width, screen_height);
+    if (custom_resolution)
+    {
+        // Nothing ever changes
+        return;
+    }
+    framebuffer->resize(screen_width, screen_height);
+}
+
 void App::align_camera()
 {
     glm::vec3 extent = delta_wing_bounding_box.extend(); // TODO: a typo
@@ -365,11 +387,18 @@ void App::loop()
 
         glfwGetFramebufferSize(window, &screen_width, &screen_height);
         glViewport(0, 0, screen_width, screen_height);
-        camera.update_components(screen_width, screen_height);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         framebuffer->use();
+        if (custom_resolution)
+        {
+            camera.update_components(custom_resolution_size.x, custom_resolution_size.y);
+        }
+        else
+        {
+            camera.update_components(screen_width, screen_height);
+        }
         draw_delta_wing();
 
         if (render_state) 
@@ -530,6 +559,24 @@ void App::draw_user_controls()
         if (ImGui::Button("Screenshot"))
         {
             screenshot();
+        }
+        if (ImGui::Checkbox("Custom resolution", &custom_resolution))
+        {
+            if (custom_resolution)
+            {
+                custom_resolution_size = glm::ivec2(screen_width, screen_height);
+            }
+            else
+            {
+                framebuffer->resize(screen_width, screen_height);
+            }
+        }
+        if (custom_resolution)
+        {
+            if (ImGui::InputInt2("Resolution", &custom_resolution_size.x))
+            {
+                framebuffer->resize(custom_resolution_size.x, custom_resolution_size.y);
+            }
         }
     }
     ImGui::End();

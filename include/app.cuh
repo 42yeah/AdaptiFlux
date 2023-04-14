@@ -32,8 +32,10 @@ private:
 
     static void key_callback_glfw(GLFWwindow *window, int key, int scancode, int action, int mods);
     static void cursor_pos_callback_glfw(GLFWwindow *window, double xpos, double ypos);
+    static void window_size_callback_glfw(GLFWwindow *window, int width, int height);
     void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
     void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos);
+    void window_size_callback(GLFWwindow *window, int width, int height);
 
     void align_camera();
     void handle_continuous_key_events();
@@ -91,6 +93,8 @@ public:
     std::unique_ptr<Framebuffer> framebuffer;
     std::shared_ptr<VAO> rect_vao;
     std::shared_ptr<Program> framebuffer_render_program;
+    bool custom_resolution;
+    glm::ivec2 custom_resolution_size;
 
     // UI controls
     bool user_interface_mode;
