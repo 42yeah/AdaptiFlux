@@ -3,6 +3,7 @@
 
 #include <glad/glad.h>
 #include <iostream>
+#include <glm/glm.hpp>
 #include "Program.h"
 #include "VAO.h"
 
@@ -27,6 +28,8 @@ public:
         const std::string &uniform_name, int texture_id = 0);
 
     GLuint get_texture() const;
+
+    glm::ivec2 get_size() const;
 
     bool render_test_buffer();
 

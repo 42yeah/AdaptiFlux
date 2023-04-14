@@ -49,6 +49,13 @@ private:
     // Favourite camera pose
     void favorite_camera_pose() const;
     void restore_camera_pose();
+    
+    //
+    // Take a screenshot.
+    // Screenshots will be automatically saved to figs/ folder (which will be created, if it doesn't exist)
+    // With the following name: <vectorfield_name>_<resolution>_<time>.jpg
+    //
+    bool screenshot() const;
 
     // Debug sample vector field
     void debug_vf() const;

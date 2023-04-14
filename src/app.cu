@@ -2,6 +2,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <fstream>
 #include <iomanip>
+#include <filesystem>
+#include <string>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
@@ -525,10 +527,10 @@ void App::draw_user_controls()
             restore_camera_pose();
         }
 
-        // if (ImGui::Button("Screenshot"))
-        // {
-
-        // }
+        if (ImGui::Button("Screenshot"))
+        {
+            screenshot();
+        }
     }
     ImGui::End();
 
@@ -601,4 +603,51 @@ void App::debug_vf() const
         float4 result = launch_sample_single_texture_3d_kernel(res.vf_tex.texture, x, y, z);
         std::cout << result.x << ", " << result.y << ", " << result.z << ", " << result.w << std::endl;
     }
+}
+
+bool App::screenshot() const
+{
+    namespace fs = std::filesystem;
+
+    fs::path figs("figs");
+    const auto type = fs::status(figs).type();
+    if (type == fs::file_type::not_found)
+    {
+        if (!fs::create_directory(figs))
+        {
+            std::cerr << "Cannot create directory " << figs << "?" << std::endl;
+            return false;
+        }
+    }
+    if (type != fs::file_type::not_found && type != fs::file_type::directory)
+    {
+        std::cerr << "Figs already exists and is not folder?" << std::endl;
+        return false;
+    }
+
+    const auto now = std::chrono::system_clock::now();
+    time_t now_time = std::chrono::system_clock::to_time_t(now);
+    tm *time_tm = localtime(&now_time);
+    char time_str[256] = { 0 };
+    strftime(time_str, sizeof(time_str), "%y%m%d_%H%M", time_tm);
+
+    const auto fb_size = framebuffer->get_size();
+    
+    // Split '/'
+    std::string vf_name = res.vf_name;
+    const auto slash_pos = vf_name.find_last_of("/");
+    if (slash_pos != std::string::npos)
+    {
+        vf_name = vf_name.substr(slash_pos + 1);
+    }
+
+    fs::path screenshot_path = figs / (vf_name + "_" + 
+        (std::to_string(fb_size.x) + "x" + std::to_string(fb_size.y)) + "_" + time_str + ".jpg");
+
+    if (!framebuffer->screenshot(screenshot_path.string()))
+    {
+        std::cerr << "Cannot screenshot to " << screenshot_path << "?" << std::endl;
+        return false;
+    }
+    return true;
 }

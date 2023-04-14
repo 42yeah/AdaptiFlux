@@ -163,3 +163,8 @@ void Framebuffer::draw(std::shared_ptr<VAO> vao, std::shared_ptr<Program> progra
 
     CHECK_OPENGL_ERRORS();
 }
+
+glm::ivec2 Framebuffer::get_size() const
+{
+    return { width, height };
+}

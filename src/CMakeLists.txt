@@ -6,6 +6,7 @@ set(ADAPTIFLUX_SRC
     Program.cpp 
     VAO.cpp
     Framebuffer.cpp
+    yylvv.cu
     renderstates/arrowglyph.cu
     renderstates/lineglyph.cu 
     renderstates/streamline.cu

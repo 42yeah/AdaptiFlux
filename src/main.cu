@@ -1,5 +1,4 @@
 #include <iostream>
-#define YYLVV_IMPL
 #include "yylvv.cuh"
 // #define YYLVV_UI_IMPL
 // #include "ui.cuh"
