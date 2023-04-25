@@ -47,10 +47,10 @@ bool initialize_yylvv_contents(int argc, char *argv[], YYLVVRes &res) {
         return false;
     }
 
-    std::cout << "Creating YYLVV window and OpenGL context." << std::endl;
-    res.window = create_yylvv_window(1024, 768, "YYLVV visualizer");
+    std::cout << "Creating AdaptiFlux window and OpenGL context." << std::endl;
+    res.window = create_yylvv_window(1024, 768, "AdaptiFlux Vector Field Visualizer");
     if (!res.window) {
-        std::cerr << "Cannot create YYLVV window?" << std::endl;
+        std::cerr << "Cannot create AdaptiFlux window?" << std::endl;
         return false;
     }
     return true;

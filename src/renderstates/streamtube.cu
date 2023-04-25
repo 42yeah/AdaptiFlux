@@ -278,7 +278,12 @@ void StreamTubeRenderState::draw_user_controls(App &app)
         }
         
         should_update |= ImGui::SliderFloat("Streamtube radius", &streamtube_radius, 0.1f, 10.0f);
-        should_update |= ImGui::Checkbox("Enable shadow mapping", &shadow_mapping);
+        // should_update |= ImGui::Checkbox("Enable shadow mapping", &shadow_mapping);
+
+        if (ImGui::Button("Export OBJ"))
+        {
+            export_streamtube_vbo_as_obj("exported.obj");
+        }
 
         ImGui::End();
 
@@ -333,6 +338,8 @@ __global__ void streamtube_kernel(float *streamtube_vbo_data,
         1, 2, 4,
         4, 2, 5
     };
+
+    glm::vec3 prev_right = glm::vec3(0.0f), prev_up = glm::vec3(0.0f);
     while (true)
     {
         StreamLineVertex &streamline_vert_a = (*(StreamLineVertex *) &(streamline_vbo_data[streamline_index]));
@@ -344,7 +351,6 @@ __global__ void streamtube_kernel(float *streamtube_vbo_data,
         }
 
         glm::vec3 front = glm::normalize(streamline_vert_b.position - streamline_vert_a.position);
-        // TODO: cross operation might take a long time.
         glm::vec3 right = glm::normalize(glm::cross(front, up));
         glm::vec3 up = glm::normalize(glm::cross(right, front));
 
@@ -353,19 +359,32 @@ __global__ void streamtube_kernel(float *streamtube_vbo_data,
         for (int i = 0; i < 3; i++)
         {
             float rot = ((float) (i + 1) / 3) * 2.0f * glm::pi<float>();
-            glm::vec3 tube_left_pos = streamline_vert_a.position + streamtube_radius * (right * cosf(rot) + up * sinf(rot));
+
+            glm::vec3 tube_left_pos;
+            if (prev_right != glm::vec3(0.0f))
+            {
+                tube_left_pos = streamline_vert_a.position + streamtube_radius * (prev_right * cosf(rot) + prev_up * sinf(rot));
+            }
+            else
+            {
+                tube_left_pos = streamline_vert_a.position + streamtube_radius * (right * cosf(rot) + up * sinf(rot));
+            }
+
             glm::vec3 tube_right_pos = streamline_vert_b.position + streamtube_radius * (right * cosf(rot) + up * sinf(rot));
-            StreamTubeVertex left;
-            left.position = tube_left_pos;
-            left.normal = glm::vec3(0.0f); // TODO: TBD
-            left.color = streamline_vert_a.color;
-            StreamTubeVertex right;
-            right.position = tube_right_pos;
-            right.normal = glm::vec3(0.0f);
-            right.color = streamline_vert_b.color;
-            tube_vertices[i] = left;
-            tube_vertices[i + 3] = right;
+            StreamTubeVertex left_tube;
+            left_tube.position = tube_left_pos;
+            left_tube.normal = glm::vec3(0.0f); // TODO: TBD
+            left_tube.color = streamline_vert_a.color;
+            StreamTubeVertex right_tube;
+            right_tube.position = tube_right_pos;
+            right_tube.normal = glm::vec3(0.0f);
+            right_tube.color = streamline_vert_b.color;
+            tube_vertices[i] = left_tube;
+            tube_vertices[i + 3] = right_tube;
         }
+
+        prev_right = right;
+        prev_up = up;
         
         StreamTubeVertex *indices = (StreamTubeVertex *) &(streamtube_vbo_data[streamtube_index]);
         for (int i = 0; i < 18; i++)
