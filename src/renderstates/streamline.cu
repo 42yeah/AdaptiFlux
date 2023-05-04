@@ -10,6 +10,7 @@
 #include <cuda_gl_interop.h>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <chrono>
 
 StreamLineRenderState::StreamLineRenderState() : num_seeds(200),
         num_lines(8192),
@@ -308,6 +309,7 @@ bool StreamLineRenderState::generate_seed_points(App &app, int num_seeds)
 
 bool StreamLineRenderState::generate_streamlines(App &app) 
 {
+    const auto started = std::chrono::high_resolution_clock::now();
     if (adaptive_mode)
     {
         if (!trace_streamlines_adaptive(app))
@@ -331,17 +333,24 @@ bool StreamLineRenderState::generate_streamlines(App &app)
             return false;
         }
     }
+    const auto streamlines_traced = std::chrono::high_resolution_clock::now();
+    std::cout << "Profile: streamlines traced: " << ((streamlines_traced - started).count() * 1e-6) << "ms" << std::endl;
     if (!finalize_seed_points(app))
     {
         std::cerr << "Failed to finalize seed points?" << std::endl;
     }
+    const auto seedpoints_finalized = std::chrono::high_resolution_clock::now();
     if (do_simplify)
     {
         if (!simplify_streamlines())
         {
             std::cerr << "Failed to simplify streamlines?" << std::endl;
         }
+        const auto streamlines_simplified = std::chrono::high_resolution_clock::now();
+        std::cout << "Profile: streamlines simplified: " << ((streamlines_simplified - seedpoints_finalized).count() * 1e-6) << "ms" << std::endl;
     }
+    const auto done = std::chrono::high_resolution_clock::now();
+    std::cout << "Total: " << ((done - started).count() * 1e-6) << "ms" << std::endl;
 
     return true;
 }
@@ -986,8 +995,8 @@ bool StreamLineRenderState::simplify_streamlines()
 
     CHECK_CUDA_ERROR(cudaDeviceSynchronize());
 
-    TraceInfo *debug_host = new TraceInfo[num_seeds];
-    CHECK_CUDA_ERROR(cudaMemcpy(debug_host, debug, num_seeds * sizeof(TraceInfo), cudaMemcpyDeviceToHost));
+    TraceInfo *debug_host = new TraceInfo[num_streamlines];
+    CHECK_CUDA_ERROR(cudaMemcpy(debug_host, debug, num_streamlines * sizeof(TraceInfo), cudaMemcpyDeviceToHost));
 
     float max_distortion = 0.0f;
     float avg_distortion = 0.0f;

@@ -325,6 +325,7 @@ __global__ void streamtube_kernel(float *streamtube_vbo_data,
     int streamtube_starting_index = seed_index * streamtube_stride;
     int streamline_index = streamline_starting_index;
     int streamtube_index = streamtube_starting_index;
+    int streamtube_next_index = streamtube_starting_index + streamtube_stride;
 
     memset(&streamtube_vbo_data[streamtube_starting_index], 0, sizeof(float) * streamtube_stride);
 
@@ -342,6 +343,11 @@ __global__ void streamtube_kernel(float *streamtube_vbo_data,
     glm::vec3 prev_right = glm::vec3(0.0f), prev_up = glm::vec3(0.0f);
     while (true)
     {
+        if (streamtube_index >= streamtube_next_index)
+        {
+            break;
+        }
+
         StreamLineVertex &streamline_vert_a = (*(StreamLineVertex *) &(streamline_vbo_data[streamline_index]));
         StreamLineVertex &streamline_vert_b = (*(StreamLineVertex *) &(streamline_vbo_data[streamline_index + 6]));
 
