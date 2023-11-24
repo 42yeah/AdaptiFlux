@@ -1,4 +1,6 @@
 #include "yylvv.cuh"
+#include <cstring>
+
 
 bool initialize_yylvv_contents(int argc, char *argv[], YYLVVRes &res) {
     if (argc != 2) {
@@ -213,7 +215,13 @@ bool free_yylvv_resources(YYLVVRes &res) {
 }
 
 GLFWwindow *create_yylvv_window(int width, int height, const std::string &title) {
-    glfwInit();
+    int res = glfwInit();
+    if (res == GLFW_FALSE) {
+        const char *msg = nullptr;
+        int code = glfwGetError(&msg);
+        std::cerr << "Failed to initialize GLFW? " << msg << " code: " << code << std::endl;
+        return nullptr;
+    }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);

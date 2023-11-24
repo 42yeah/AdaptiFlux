@@ -7,6 +7,7 @@
 
 #include <glad/glad.h>
 #include <iostream>
+#include <memory>
 #include <vector>
 
 struct VertexAttribPointer {

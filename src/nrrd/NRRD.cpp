@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <cstring> // std::strncmp
 #include <functional>
 
 NRRD::NRRD() : raw_data(nullptr) {
@@ -112,14 +113,14 @@ bool NRRD::parse_line(const std::string &line) {
         }
         raw_data.reset(new float[raw_data_size]);
     } else if (key == "spacings") {
-        split_string(value, [&](int i, const auto &s) {
+        split_string(value, [&](int i, const std::string &s) {
             if (i == 0) {
                 return;
             }
             spacings[i - 1] = std::stof(s);
         });
     } else if (key == "axis mins") {
-        split_string(value, [&](int i, const auto &s) {
+        split_string(value, [&](int i, const std::string &s) {
             if (i == 0) {
                 return;
             }

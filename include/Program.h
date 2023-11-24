@@ -7,6 +7,7 @@
 
 #include <map>
 #include <iostream>
+#include <memory>
 #include <glad/glad.h>
 
 class Program;
