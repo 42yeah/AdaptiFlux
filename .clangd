@@ -1,0 +1,13 @@
+CompileFlags:
+    Add: [
+        "--cuda-path=D:\\cuda",
+        "--no-cuda-version-check",
+        "-ID:\\projects\\prefix\\include"
+    ]
+    Remove: [
+        -Xcudafe,
+        -Xcompiler*,
+        --diag_suppress=esa*,
+        --generate-code=*,
+        -forward-*
+    ]
