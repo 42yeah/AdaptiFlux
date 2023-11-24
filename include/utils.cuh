@@ -4,6 +4,7 @@
 #include <cmath>
 #include <glm/glm.hpp>
 #include <glad/glad.h>
+#include <iostream>
 #include <cuda_runtime.h>
 
 #define STR_HELPER(x) #x

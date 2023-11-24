@@ -1,7 +1,7 @@
 #include "renderstates/arrowglyph.cuh"
-#include <__clang_cuda_builtin_vars.h>
 #include <vector>
 #include <imgui.h>
+#include <driver_types.h>
 #include "debug_kernels.cuh"
 #include "utils.cuh"
 #include "app.cuh"

@@ -2,3 +2,5 @@ build/**
 .vscode
 data/**
 *.kdev4
+*.org
+.cache/**
