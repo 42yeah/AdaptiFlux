@@ -227,6 +227,10 @@ bool App::init()
     // assert(framebuffer->render_test_buffer());
     CHECK_OPENGL_ERRORS();
 
+    elapsed = 0.0f;
+    framerate_sum = 0.0f;
+    framerate_history.clear();
+
     return true;
 }
 
@@ -376,6 +380,7 @@ void App::loop()
 
         double this_instant = glfwGetTime();
         delta_time = (float) (this_instant - last_instant);
+        elapsed += delta_time;
         last_instant = this_instant;
 
         handle_continuous_key_events();
@@ -581,7 +586,46 @@ void App::draw_user_controls()
     }
     ImGui::End();
 
+    framerate_layer();
+
     // ImGui::ShowDemoWindow();
+}
+
+void App::framerate_layer()
+{
+    if (framerate_history.size() > 2 * MAX_FRAMERATE_HISTORY)
+    {
+        framerate_history.erase(framerate_history.begin(), framerate_history.begin() + MAX_FRAMERATE_HISTORY);
+    }
+    // Whenever this layer is called, that probably means one exact frame has passed
+
+    FrameRateInfo this_frame = {
+        elapsed, 1.0f / delta_time, delta_time
+    };
+    framerate_history.push_back(this_frame);
+    framerate_sum += this_frame.framerate;
+    int num_frames = framerate_history.size();
+    // std::cout << "Adding " << framerate_sum << ", num frames: " << num_frames << std::endl;
+    if (framerate_history.size() > MAX_FRAMERATE_HISTORY)
+    {
+        framerate_sum -= framerate_history[framerate_history.size() - MAX_FRAMERATE_HISTORY - 1].framerate;
+        num_frames = MAX_FRAMERATE_HISTORY;
+        // std::cout << "Removing first frame. Num frames: " << num_frames << std::endl;
+    }
+
+    ImGui::SetNextWindowPos({ 500, 500 }, ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize({ 100, 100 }, ImGuiCond_FirstUseEver);
+    if (ImGui::Begin("Framerate"))
+    {
+        ImGui::Text("Framerate: %f", framerate_history.back().framerate);
+
+        if (framerate_history.size() > 0)
+        {
+            ImGui::Text("Average: %f", framerate_sum / num_frames);
+        }
+
+    }
+    ImGui::End();
 }
 
 void App::set_user_interface_mode(bool new_ui_mode)

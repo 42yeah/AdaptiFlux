@@ -5,7 +5,8 @@
 
 class App;
 
-class RenderState {
+class RenderState
+{
 public:
     virtual void initialize(App &app) = 0;
     virtual void destroy() = 0;
@@ -13,6 +14,13 @@ public:
     virtual void process_events(App &app) = 0;
     virtual void key_pressed(App &app, int key) = 0;
     virtual void draw_user_controls(App &app) = 0;
+};
+
+struct FrameRateInfo
+{
+    float timestamp;
+    float framerate;
+    float delta_time;
 };
 
 #endif

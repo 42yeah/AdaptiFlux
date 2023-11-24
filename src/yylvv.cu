@@ -1,4 +1,5 @@
 #include "yylvv.cuh"
+#include <GLFW/glfw3.h>
 #include <cstring>
 
 
@@ -236,6 +237,9 @@ GLFWwindow *create_yylvv_window(int width, int height, const std::string &title)
         glfwDestroyWindow(window);
         return nullptr;
     }
+
+    glfwSwapInterval(1);
+
     return window;
 }
 

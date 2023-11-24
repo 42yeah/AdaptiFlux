@@ -9,8 +9,11 @@
 #include "Program.h"
 #include "Camera.h"
 #include <VectorField.h> // for bounding box
+#include <vector>
 #include "renderstate.cuh"
 #include "Framebuffer.h"
+
+#define MAX_FRAMERATE_HISTORY 200
 
 class RenderState;
 
@@ -46,6 +49,7 @@ private:
 
     // User controls
     void draw_user_controls();
+    void framerate_layer();
     void set_user_interface_mode(bool new_ui_mode);
 
     // Favourite camera pose
@@ -102,6 +106,11 @@ public:
     bool should_draw_bounding_box;
     bool should_draw_delta_wing;
     bool should_draw_shadow;
+
+    // Frame rate history, and other UI information
+    float elapsed;
+    std::vector<FrameRateInfo> framerate_history;
+    float framerate_sum;
 };
 
 #endif // APP_CUH
