@@ -1,4 +1,5 @@
 #include "app.cuh"
+#include <cfloat>
 #include <glm/gtc/type_ptr.hpp>
 #include <fstream>
 #include <iomanip>
@@ -7,6 +8,7 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include <implot.h>
 #include "debug_kernels.cuh"
 #include "renderstates/lineglyph.cuh"
 #include "renderstates/arrowglyph.cuh"
@@ -48,6 +50,7 @@ App::~App()
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
+    ImPlot::DestroyContext();
     ImGui::DestroyContext();
 }
 
@@ -198,6 +201,7 @@ bool App::init()
 
     // Setup ImGui
     ImGui::CreateContext();
+    ImPlot::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
     io.IniFilename = nullptr;
 
@@ -229,7 +233,17 @@ bool App::init()
 
     elapsed = 0.0f;
     framerate_sum = 0.0f;
-    framerate_history.clear();
+    framerate_history.framerate.clear();
+    framerate_history.delta_time.clear();
+    framerate_history.timestamp.clear();
+    for (int i = 0; i < MAX_FRAMERATE_HISTORY; i++)
+    {
+        framerate_history.history_xs[i] = ((float) i / MAX_FRAMERATE_HISTORY);
+    }
+    std::memset(framerate_history.history_ys, 0, sizeof(float) * MAX_FRAMERATE_HISTORY);
+    framerate_history.best_framerate = std::numeric_limits<float>::min();
+    framerate_history.worst_framerate = std::numeric_limits<float>::max();
+    framerate_history.stress_test = false;
 
     return true;
 }
@@ -593,39 +607,65 @@ void App::draw_user_controls()
 
 void App::framerate_layer()
 {
-    if (framerate_history.size() > 2 * MAX_FRAMERATE_HISTORY)
+    if (framerate_history.framerate.size() > 2 * MAX_FRAMERATE_HISTORY)
     {
-        framerate_history.erase(framerate_history.begin(), framerate_history.begin() + MAX_FRAMERATE_HISTORY);
+        framerate_history.framerate.erase(framerate_history.framerate.begin(), framerate_history.framerate.begin() + MAX_FRAMERATE_HISTORY);
+        framerate_history.delta_time.erase(framerate_history.delta_time.begin(), framerate_history.delta_time.begin() + MAX_FRAMERATE_HISTORY);
+        framerate_history.timestamp.erase(framerate_history.timestamp.begin(), framerate_history.timestamp.begin() + MAX_FRAMERATE_HISTORY);
     }
     // Whenever this layer is called, that probably means one exact frame has passed
 
-    FrameRateInfo this_frame = {
-        elapsed, 1.0f / delta_time, delta_time
-    };
-    framerate_history.push_back(this_frame);
-    framerate_sum += this_frame.framerate;
-    int num_frames = framerate_history.size();
+    float this_frame_timestamp = elapsed;
+    float this_frame_fps = 1.0f / delta_time;
+    float this_frame_dt = delta_time;
+    framerate_history.best_framerate = glm::max(framerate_history.best_framerate, this_frame_fps);
+    framerate_history.worst_framerate = glm::min(framerate_history.worst_framerate, this_frame_fps);
+
+    framerate_history.timestamp.push_back(this_frame_timestamp);
+    framerate_history.framerate.push_back(this_frame_fps);
+    framerate_history.delta_time.push_back(this_frame_dt);
+
+    framerate_sum += this_frame_fps;
+    int num_frames = framerate_history.framerate.size();
     // std::cout << "Adding " << framerate_sum << ", num frames: " << num_frames << std::endl;
-    if (framerate_history.size() > MAX_FRAMERATE_HISTORY)
+    if (framerate_history.framerate.size() > MAX_FRAMERATE_HISTORY)
     {
-        framerate_sum -= framerate_history[framerate_history.size() - MAX_FRAMERATE_HISTORY - 1].framerate;
+        framerate_sum -= framerate_history.framerate[framerate_history.framerate.size() - MAX_FRAMERATE_HISTORY - 1];
         num_frames = MAX_FRAMERATE_HISTORY;
         // std::cout << "Removing first frame. Num frames: " << num_frames << std::endl;
     }
 
-    ImGui::SetNextWindowPos({ 500, 500 }, ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize({ 100, 100 }, ImGuiCond_FirstUseEver);
+    std::memcpy(framerate_history.history_ys,
+                &framerate_history.framerate[framerate_history.framerate.size() - num_frames],
+                sizeof(float) * num_frames);
+
+    ImGui::SetNextWindowPos({ 0, 380 }, ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize({ 250, (float) screen_height - 380.0f }, ImGuiCond_FirstUseEver);
     if (ImGui::Begin("Framerate"))
     {
-        ImGui::Text("Framerate: %f", framerate_history.back().framerate);
+        ImGui::Text("Framerate: %f", framerate_history.framerate.back());
 
-        if (framerate_history.size() > 0)
+        if (framerate_history.framerate.size() > 0)
         {
             ImGui::Text("Average: %f", framerate_sum / num_frames);
+            ImGui::Text("Best FPS: %f, worst FPS: %f", framerate_history.best_framerate, framerate_history.worst_framerate);
+            sprintf_s(framerate_history.stress_test_desc, "Stress test %s", framerate_history.stress_test ? "ON" : "OFF");
+            if (ImGui::Button(framerate_history.stress_test_desc))
+            {
+                framerate_history.stress_test = !framerate_history.stress_test;
+            }
         }
 
+        if (ImPlot::BeginPlot("FPS Plot"))
+        {
+            ImPlot::SetupAxes("record", "FPS");
+            ImPlot::PlotLine("Framerate", framerate_history.history_xs, framerate_history.history_ys, num_frames);
+            ImPlot::EndPlot();
+        }
     }
     ImGui::End();
+
+    // ImPlot::ShowDemoWindow();
 }
 
 void App::set_user_interface_mode(bool new_ui_mode)

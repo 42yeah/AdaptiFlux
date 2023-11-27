@@ -215,7 +215,7 @@ void StreamTubeRenderState::draw_user_controls(App &app)
     ImGui::SetNextWindowPos({220.0f, 0.0f}, ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize({app.screen_width - 220.0f, 140}, ImGuiCond_FirstUseEver);
     
-    bool should_update = false;
+    bool should_update = false || app.framerate_history.stress_test;
 
     if (ImGui::Begin("Streamtube Controls"))
     {
@@ -228,6 +228,7 @@ void StreamTubeRenderState::draw_user_controls(App &app)
         if (ImGui::RadioButton("Delta wing recommended strategy", seed_points_strategy == 0)) { seed_points_strategy = 0; should_update = true; }
         if (ImGui::RadioButton("Line", seed_points_strategy == 1)) { seed_points_strategy = 1; should_update = true; }
         if (ImGui::RadioButton("Rect", seed_points_strategy == 2)) { seed_points_strategy = 2; should_update = true; }
+        if (ImGui::RadioButton("Uniform Spherical", seed_points_strategy == 3)) { seed_points_strategy = 3; should_update = true; }
         if (seed_points_strategy != 0 && ImGui::CollapsingHeader("Seeding strategy"))
         {
             ImGui::Text("Bounding box: (%f %f %f)", app.delta_wing_bounding_box.max.x,

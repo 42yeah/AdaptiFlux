@@ -2,6 +2,9 @@
 #define YYLVV_RENDERSTATE_CUH
 
 #include "yylvv.cuh"
+#include <vector>
+
+#define MAX_FRAMERATE_HISTORY 200
 
 class App;
 
@@ -18,9 +21,14 @@ public:
 
 struct FrameRateInfo
 {
-    float timestamp;
-    float framerate;
-    float delta_time;
+    std::vector<float> timestamp;
+    std::vector<float> framerate;
+    std::vector<float> delta_time;
+    float history_xs[MAX_FRAMERATE_HISTORY];
+    float history_ys[MAX_FRAMERATE_HISTORY];
+    float best_framerate, worst_framerate;
+    bool stress_test;
+    char stress_test_desc[128];
 };
 
 #endif

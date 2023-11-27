@@ -13,8 +13,6 @@
 #include "renderstate.cuh"
 #include "Framebuffer.h"
 
-#define MAX_FRAMERATE_HISTORY 200
-
 class RenderState;
 
 class App
@@ -109,7 +107,7 @@ public:
 
     // Frame rate history, and other UI information
     float elapsed;
-    std::vector<FrameRateInfo> framerate_history;
+    FrameRateInfo framerate_history;
     float framerate_sum;
 };
 

@@ -25,6 +25,7 @@ add_subdirectory(shaders)
 
 target_link_libraries(adaptiflux PUBLIC 
     glad 
+    implot
     imgui
     nrrd
     glm::glm

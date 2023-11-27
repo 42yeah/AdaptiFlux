@@ -190,7 +190,7 @@ void LineGlyphRenderState::draw_user_controls(App &app)
     ImGui::SetNextWindowPos({220.0f, 0.0f}, ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize({app.screen_width - 220.0f, 140}, ImGuiCond_FirstUseEver);
     
-    bool should_update = false;
+    bool should_update = false || app.framerate_history.stress_test;
 
     if (ImGui::Begin("Line Glyph Controls"))
     {

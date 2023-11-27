@@ -27,6 +27,7 @@ protected:
     bool generate_seed_points_delta_wing(const BBox &bbox, int num_seeds);
     bool generate_seed_points_line(glm::vec3 a, glm::vec3 b, int num_seeds);
     bool generate_seed_points_rect(glm::vec3 a, glm::vec3 b, int num_seeds);
+    bool generate_seed_points_spherical(glm::vec3 c, float r, int num_seeds);
     bool trace_streamlines(App &app);
     bool finalize_seed_points(App &app);
 
@@ -60,6 +61,7 @@ protected:
     int seed_points_strategy;
     glm::vec3 seed_begin;
     glm::vec3 seed_end;
+    float seed_radius;
 
     // seed point rendering
     bool render_seed_points;

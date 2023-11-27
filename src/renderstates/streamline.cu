@@ -1,5 +1,6 @@
 #include "renderstates/streamline.cuh"
 #include <iostream>
+#include <random>
 #include "app.cuh"
 #include "utils.cuh"
 #include "debug_kernels.cuh"
@@ -30,6 +31,7 @@ StreamLineRenderState::StreamLineRenderState() : num_seeds(200),
         seed_points_strategy(0),
         seed_begin(0.0f),
         seed_end(0.0f),
+        seed_radius(1.0f),
         render_seed_points(false),
         seed_points_vao(nullptr),
         seed_points_program(nullptr),
@@ -291,6 +293,30 @@ bool StreamLineRenderState::generate_seed_points_rect(glm::vec3 a, glm::vec3 b, 
     return true;
 }
 
+bool StreamLineRenderState::generate_seed_points_spherical(glm::vec3 c, float r, int num_seeds)
+{
+    seed_points.clear();
+
+    std::random_device dev;
+    std::uniform_real_distribution<float> distrib;
+    // Generate N number of seed points using rejection sampling.
+    for (int i = 0; i < num_seeds; i++)
+    {
+        float x = distrib(dev) * 2.0f - 1.0f;
+        float y = distrib(dev) * 2.0f - 1.0f;
+        float z = distrib(dev) * 2.0f - 1.0f;
+        if (x * x + y * y + z * z > 1.0f)
+        {
+            i--;
+            continue;
+        }
+        seed_points.push_back(c + glm::vec3(x, y, z) * r);
+    }
+    std::cout << "Spherical seed generation: " << seed_points.size() << " seeds generated." << std::endl;
+
+    return true;
+}
+
 bool StreamLineRenderState::generate_seed_points(App &app, int num_seeds)
 {
     if (seed_points_strategy == 0)
@@ -301,9 +327,13 @@ bool StreamLineRenderState::generate_seed_points(App &app, int num_seeds)
     {
         return generate_seed_points_line(seed_begin, seed_end, num_seeds);
     }
-    else
+    else if (seed_points_strategy == 2)
     {
         return generate_seed_points_rect(seed_begin, seed_end, num_seeds);
+    }
+    else
+    {
+        return generate_seed_points_spherical(seed_begin, seed_radius, num_seeds);
     }
 }
 
@@ -334,7 +364,7 @@ bool StreamLineRenderState::generate_streamlines(App &app)
         }
     }
     const auto streamlines_traced = std::chrono::high_resolution_clock::now();
-    std::cout << "Profile: streamlines traced: " << ((streamlines_traced - started).count() * 1e-6) << "ms" << std::endl;
+    // std::cout << "Profile: streamlines traced: " << ((streamlines_traced - started).count() * 1e-6) << "ms" << std::endl;
     if (!finalize_seed_points(app))
     {
         std::cerr << "Failed to finalize seed points?" << std::endl;
@@ -347,10 +377,10 @@ bool StreamLineRenderState::generate_streamlines(App &app)
             std::cerr << "Failed to simplify streamlines?" << std::endl;
         }
         const auto streamlines_simplified = std::chrono::high_resolution_clock::now();
-        std::cout << "Profile: streamlines simplified: " << ((streamlines_simplified - seedpoints_finalized).count() * 1e-6) << "ms" << std::endl;
+        // std::cout << "Profile: streamlines simplified: " << ((streamlines_simplified - seedpoints_finalized).count() * 1e-6) << "ms" << std::endl;
     }
     const auto done = std::chrono::high_resolution_clock::now();
-    std::cout << "Total: " << ((done - started).count() * 1e-6) << "ms" << std::endl;
+    // std::cout << "Total: " << ((done - started).count() * 1e-6) << "ms" << std::endl;
 
     return true;
 }
@@ -427,7 +457,7 @@ bool StreamLineRenderState::trace_streamlines(App &app)
 {
     int num_blocks_x = 32;
     int num_blocks_y = (seed_points.size() + (num_blocks_x - 1)) / num_blocks_x;
-    std::cout << "Trace report: parallel blocks: (" << num_blocks_x << ", " << num_blocks_y << ")" << std::endl;
+    // std::cout << "Trace report: parallel blocks: (" << num_blocks_x << ", " << num_blocks_y << ")" << std::endl;
     dim3 num_blocks(num_blocks_x, num_blocks_y, 1);
 
     float *vbo_data;
@@ -828,7 +858,7 @@ bool StreamLineRenderState::trace_streamlines_adaptive(App &app)
         int num_blocks_x = 32;
         int num_blocks_y = (num_trace + (num_blocks_x - 1)) / num_blocks_x;
         // std::cout << "Adaptive trace report: parallel blocks: (" << num_blocks_x << ", " << num_blocks_y << ")" << std::endl;
-        std::cout << "Adaptive trace report: " << trace_start << " to " << trace_end << std::endl;
+        // std::cout << "Adaptive trace report: " << trace_start << " to " << trace_end << std::endl;
 
         dim3 num_blocks(num_blocks_x, num_blocks_y, 1);
 
@@ -854,7 +884,7 @@ bool StreamLineRenderState::trace_streamlines_adaptive(App &app)
 
         if (trace_start > trace_end)
         {
-            std::cout << "Trace has ended because no new seed points can be generated." << std::endl;
+            // std::cout << "Trace has ended because no new seed points can be generated." << std::endl;
             break;
         }
     }
@@ -865,7 +895,7 @@ bool StreamLineRenderState::trace_streamlines_adaptive(App &app)
         int num_trace = trace_end - trace_start + 1;
         int num_blocks_x = 32;
         int num_blocks_y = (num_trace + (num_blocks_x - 1)) / num_blocks_x;
-        std::cout << "Adaptive trace report: " << trace_start << " to " << trace_end << std::endl;
+        // std::cout << "Adaptive trace report: " << trace_start << " to " << trace_end << std::endl;
         dim3 num_blocks(num_blocks_x, num_blocks_y, 1);
         constexpr float seed_point_threshold = 10.0f;
         trace_and_generate_kernel<<<num_blocks, 1>>>(seed_points_cuda, num_seeds_cuda, num_seeds, num_lines, 
@@ -889,7 +919,7 @@ bool StreamLineRenderState::trace_streamlines_adaptive(App &app)
         // const glm::vec3 &p = sp_host[i];
         // std::cout << "EXTRA SEED: " << p.x << ", " << p.y << ", " << p.z << std::endl;
     }
-    std::cout << "Adaptive trace report: " << (final_num_seeds - n_initial_seeds) << " new seeds." << std::endl;
+    // std::cout << "Adaptive trace report: " << (final_num_seeds - n_initial_seeds) << " new seeds." << std::endl;
 
     TraceInfo *debug_host = new TraceInfo[num_seeds];
     CHECK_CUDA_ERROR(cudaMemcpy(debug_host, debug, num_seeds * sizeof(TraceInfo), cudaMemcpyDeviceToHost));
@@ -1008,7 +1038,7 @@ bool StreamLineRenderState::simplify_streamlines()
         avg_distortion += info.global_distortion;
     }
     avg_distortion /= num_streamlines;
-    std::cout << "Max distortion: " << max_distortion << ", average: " << avg_distortion << std::endl;
+    // std::cout << "Max distortion: " << max_distortion << ", average: " << avg_distortion << std::endl;
 
     delete[] debug_host;
     CHECK_CUDA_ERROR(cudaGraphicsUnmapResources(1, &streamline_graphics_resource));
@@ -1037,7 +1067,7 @@ void StreamLineRenderState::draw_user_controls(App &app)
     ImGui::SetNextWindowPos({220.0f, 0.0f}, ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize({app.screen_width - 220.0f, 140}, ImGuiCond_FirstUseEver);
     
-    bool should_update = false;
+    bool should_update = false || app.framerate_history.stress_test;
 
     if (ImGui::Begin("Streamline Controls"))
     {
@@ -1050,7 +1080,8 @@ void StreamLineRenderState::draw_user_controls(App &app)
         if (ImGui::RadioButton("Delta wing recommended strategy", seed_points_strategy == 0)) { seed_points_strategy = 0; should_update = true; }
         if (ImGui::RadioButton("Line", seed_points_strategy == 1)) { seed_points_strategy = 1; should_update = true; }
         if (ImGui::RadioButton("Rect", seed_points_strategy == 2)) { seed_points_strategy = 2; should_update = true; }
-        if (seed_points_strategy != 0 && ImGui::CollapsingHeader("Seeding strategy"))
+        if (ImGui::RadioButton("Uniform Spherical", seed_points_strategy == 3)) { seed_points_strategy = 3; should_update = true; }
+        if ((seed_points_strategy == 1 || seed_points_strategy == 2) && ImGui::CollapsingHeader("Seeding strategy"))
         {
             ImGui::Text("Bounding box: (%f %f %f)", app.delta_wing_bounding_box.max.x,
                 app.delta_wing_bounding_box.max.y,
@@ -1059,6 +1090,15 @@ void StreamLineRenderState::draw_user_controls(App &app)
             should_update |= ImGui::InputFloat3("Seed begin", (float *) &seed_begin);
             should_update |= ImGui::InputFloat3("Seed end", (float *) &seed_end);
             ImGui::Text("Seeding plane offset axis");
+        }
+        if (seed_points_strategy == 3)
+        {
+            ImGui::Text("Bounding box: (%f %f %f)", app.delta_wing_bounding_box.max.x,
+                app.delta_wing_bounding_box.max.y,
+                app.delta_wing_bounding_box.max.z);
+
+            should_update |= ImGui::InputFloat3("Seed center", (float *) &seed_begin);
+            should_update |= ImGui::InputFloat("Radius", (float *) &seed_radius);
         }
         if (seed_points_strategy == 0)
         {
