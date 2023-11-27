@@ -7,6 +7,7 @@
 #include "VAO.h"
 #include "Program.h"
 #include <vector>
+#include <glm/glm.hpp>
 
 // StreamTubeRenderState basically bases itself on streamlines,
 // and just magic tubes out of thin air.
@@ -38,6 +39,7 @@ private:
 
     float streamtube_radius;
     bool shadow_mapping;
+    glm::vec3 light_dir;
 };
 
 #endif

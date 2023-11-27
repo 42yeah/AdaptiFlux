@@ -205,7 +205,7 @@ bool App::init()
     ImGuiIO &io = ImGui::GetIO();
     io.IniFilename = nullptr;
 
-    ImGui::StyleColorsDark();
+    ImGui::StyleColorsLight();
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330 core");

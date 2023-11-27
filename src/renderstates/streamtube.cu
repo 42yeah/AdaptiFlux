@@ -82,6 +82,8 @@ bool StreamTubeRenderState::allocate_graphics_resources()
         std::cerr << "Invalid streamtube program?" << std::endl;
         return false;
     }
+
+    light_dir = glm::normalize(glm::vec3(1.0f, 1.0f, 0.0f));
     return true;
 }
 
@@ -175,6 +177,8 @@ void StreamTubeRenderState::render(App &app)
     glUniformMatrix4fv(streamtube_program->at("model"), 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
     glUniformMatrix4fv(streamtube_program->at("view"), 1, GL_FALSE, glm::value_ptr(app.camera.view));
     glUniformMatrix4fv(streamtube_program->at("perspective"), 1, GL_FALSE, glm::value_ptr(app.camera.perspective));
+    glUniform3f(streamtube_program->at("camera"), app.camera.eye.x, app.camera.eye.y, app.camera.eye.z);
+    glUniform3f(streamtube_program->at("lightDir"), light_dir.x, light_dir.y, light_dir.z);
     streamtube_vao->draw();
 
     if (render_seed_points)
@@ -215,7 +219,7 @@ void StreamTubeRenderState::draw_user_controls(App &app)
     ImGui::SetNextWindowPos({220.0f, 0.0f}, ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize({app.screen_width - 220.0f, 140}, ImGuiCond_FirstUseEver);
     
-    bool should_update = false || app.framerate_history.stress_test;
+    bool should_update = false;
 
     if (ImGui::Begin("Streamtube Controls"))
     {
@@ -284,6 +288,11 @@ void StreamTubeRenderState::draw_user_controls(App &app)
         if (ImGui::Button("Export OBJ"))
         {
             export_streamtube_vbo_as_obj("exported.obj");
+        }
+
+        if (ImGui::Button("Set as lighting direction"))
+        {
+            light_dir = -app.camera.front;
         }
 
         ImGui::End();
@@ -368,23 +377,26 @@ __global__ void streamtube_kernel(float *streamtube_vbo_data,
             float rot = ((float) (i + 1) / 3) * 2.0f * glm::pi<float>();
 
             glm::vec3 tube_left_pos;
+            glm::vec3 tube_left_normal;
             if (prev_right != glm::vec3(0.0f))
             {
                 tube_left_pos = streamline_vert_a.position + streamtube_radius * (prev_right * cosf(rot) + prev_up * sinf(rot));
+                tube_left_normal = prev_right * cosf(rot) + prev_up * sinf(rot);
             }
             else
             {
                 tube_left_pos = streamline_vert_a.position + streamtube_radius * (right * cosf(rot) + up * sinf(rot));
+                tube_left_normal = right * cosf(rot) + up * sinf(rot);
             }
 
             glm::vec3 tube_right_pos = streamline_vert_b.position + streamtube_radius * (right * cosf(rot) + up * sinf(rot));
             StreamTubeVertex left_tube;
             left_tube.position = tube_left_pos;
-            left_tube.normal = glm::vec3(0.0f); // TODO: TBD
+            left_tube.normal = tube_left_normal; // TODO: TBD
             left_tube.color = streamline_vert_a.color;
             StreamTubeVertex right_tube;
             right_tube.position = tube_right_pos;
-            right_tube.normal = glm::vec3(0.0f);
+            right_tube.normal = right * cosf(rot) + up * sinf(rot);
             right_tube.color = streamline_vert_b.color;
             tube_vertices[i] = left_tube;
             tube_vertices[i + 3] = right_tube;
@@ -397,6 +409,21 @@ __global__ void streamtube_kernel(float *streamtube_vbo_data,
         for (int i = 0; i < 18; i++)
         {
             indices[i] = tube_vertices[order[i]];
+            // The three normals are: right vector rotated 165deg; right vector rotated 45deg; and right vector rotated 285deg.
+            // float deg = 0.0f;
+            // if (i < 6)
+            // {
+            //     deg = glm::radians(165.0f);
+            // }
+            // else if (i < 12)
+            // {
+            //     deg = glm::radians(45.0f);
+            // }
+            // else
+            // {
+            //     deg = glm::radians(285.0f);
+            // }
+            // indices[i].normal = cosf(deg) * right + sinf(deg) * up;
         }
 
         streamline_index += 2 * 6;
@@ -443,19 +470,6 @@ bool StreamTubeRenderState::generate_streamtubes()
 
     CHECK_CUDA_ERROR(cudaMemcpy(info.get(), info_cuda, num_blocks.x * num_blocks.y * sizeof(StreamTubeInfo), cudaMemcpyDeviceToHost));
     CHECK_CUDA_ERROR(cudaFree(info_cuda));
-
-    // for (int i = 0; i < num_blocks.y; i++)
-    // {
-    //     for (int j = 0; j < num_blocks.x; j++)
-    //     {
-    //         int idx = i * num_blocks.x + j;
-
-    //         std::cout << "BLK " << idx << ": SLSI " << info[idx].streamline_starting_index << " (" << (info[idx].streamline_starting_index / 6) << "); " << 
-    //             "SLI " << info[idx].streamline_index << " (" << (info[idx].streamline_index / 6) << "); " <<
-    //             "STSI " << info[idx].streamtube_starting_index << " (" << (info[idx].streamtube_starting_index / 9) << "); " <<
-    //             "STI " << info[idx].streamtube_index << " (" << (info[idx].streamtube_index / 9) << ")" << std::endl; 
-    //     }
-    // }
 
     CHECK_CUDA_ERROR(cudaGraphicsUnmapResources(1, &streamline_graphics_resource));
     CHECK_CUDA_ERROR(cudaGraphicsUnmapResources(1, &streamtube_graphics_resource));

@@ -8,9 +8,14 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 perspective;
 
+out vec3 pos;
 out vec3 color;
+out vec3 normal;
 
 void main() {
+    vec4 modelPos = model * vec4(aPos, 1.0);
     gl_Position = perspective * view * model * vec4(aPos, 1.0);
+    pos = vec3(modelPos);
+    normal = aNormal;
     color = aColor;
 }
